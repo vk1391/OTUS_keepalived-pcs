@@ -1,0 +1,38 @@
+- name: Install components for building
+  yum:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+    - mariadb-server
+    - MySQL-python
+
+- name: Enable and start mariadb
+  systemd:
+    name: mariadb
+    state: started
+    enabled: true
+
+- name: Create a new database with name 'cluster'
+  mysql_db:
+    check_implicit_admin: true
+    login_user: root
+    login_password: root
+    name: cluster
+    state: present
+
+- name: create_db
+  mysql_user:
+    check_implicit_admin: true
+    login_user: root
+    login_password: root
+    name: "pcs@*"
+    password: "password"
+    priv:
+      'cluster.*': 'ALL,GRANT'
+
+- name: Enable and start mariadb
+  systemd:
+    name: mariadb
+    state: restarted
+    enabled: true

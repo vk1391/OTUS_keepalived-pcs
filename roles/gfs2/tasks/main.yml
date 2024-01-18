@@ -1,0 +1,16 @@
+---
+- meta: end_play
+  when: (ansible_distribution != "CentOS" and ansible_distribution_major_version != "7")
+
+- name: Install components for building
+  yum:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+    - lvm2-cluster
+    - gfs2-utils
+
+
+  
+...

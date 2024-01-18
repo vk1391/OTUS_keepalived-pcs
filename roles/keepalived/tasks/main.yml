@@ -1,0 +1,46 @@
+- name: Install components for building
+  yum:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+    - keepalived
+
+- name: add sysctl VIP
+  command: 'sysctl net.ipv4.ip_nonlocal_bind=1'
+
+- name: copy keepalived.conf
+  copy:
+    content: |
+      vrrp_instance VI_1 {
+      interface eth1
+      state {{ role }}
+      virtual_router_id 1
+      priority 101
+      virtual_ipaddress {
+      192.168.57.254
+      }
+      authentication {
+      auth_type PASS
+      auth_pass secret_password
+      }
+      }
+    dest: /etc/keepalived/keepalived.conf
+    owner: root
+    group: root
+    mode: 0644
+- name: Enable and start keepalived
+  systemd:
+    name: keepalived
+    state: started
+    enabled: true
+- name: Enable and start firewalld
+  systemd:
+    name: firewalld
+    state: started
+    enabled: true
+- name: open http port
+  command: "{{ item }}"
+  with_items: 
+    - 'sudo firewall-cmd --permanent --add-port=80/tcp'
+    - 'sudo firewall-cmd --reload' 

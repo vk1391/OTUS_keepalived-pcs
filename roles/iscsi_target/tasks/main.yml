@@ -1,0 +1,21 @@
+---
+- name: Install components for building
+  yum:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+    - targetcli
+
+- name: Copy script
+  copy:
+    src: script_iscsi.sh
+    dest: ~/script_iscsi.sh
+    owner: root
+    group: root
+    mode: 0644
+- name: run script
+  become: true
+  command: "sh ~/script_iscsi.sh"
+  ignore_errors: true
+...

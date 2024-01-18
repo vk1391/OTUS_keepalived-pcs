@@ -1,0 +1,68 @@
+---
+- meta: end_play
+  when: (ansible_distribution != "CentOS" and ansible_distribution_major_version != "7")
+
+- name: Install components for building
+  yum:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+      - nginx
+      - php
+      - php-fpm
+      - php-mysql
+      - php-mysqli
+
+- name: Copy nginx.conf
+  copy:
+    src: nginx_php.conf
+    dest: /etc/nginx/nginx.conf
+    owner: root
+    group: root
+    mode: 0644
+- name: Copy www php-fpm
+  copy:
+    src: www.conf
+    dest: /etc/php-fpm.d/www.conf
+    owner: root
+    group: root
+    mode: 0644    
+- name: Copy db_connect script
+  copy:
+    src: con_db.php
+    dest: /home/vagrant/con_db.php
+    owner: root
+    group: root
+    mode: 733
+
+- name: Copy index.php
+  copy:
+    content: |
+      <?php phpinfo(); ?>
+    dest: /usr/share/nginx/html/index.php
+    owner: nginx
+    group: nginx
+    mode: 0644  
+
+- name: Enable and start nginx
+  systemd:
+    name: nginx
+    state: started
+    enabled: true
+- name: Enable and start php-fpm
+  systemd:
+    name: php-fpm
+    state: started
+    enabled: true
+- name: run con_db  
+  command: 'sudo php /home/vagrant/con_db.php'
+- name: Enable and start php-fpm
+  systemd:
+    name: php-fpm
+    state: restarted
+- name: open http port
+  command: "{{ item }}"
+  with_items: 
+    - 'sudo firewall-cmd --permanent --add-port=80/tcp'
+    - 'sudo firewall-cmd --reload' 

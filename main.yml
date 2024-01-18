@@ -1,0 +1,87 @@
+---
+- name: iscsi_target
+  hosts: iscsi_server
+  become: true
+  tags:
+    - all
+
+  roles:
+    - iscsi_target
+
+- name: cluster prepare
+  hosts: pcs_servers
+  become: true
+  tags:
+    - all
+
+  roles:
+    - base_config
+    - pcs_install
+    - fence_agents
+
+- name: database create
+  hosts: db
+  become: true
+  tags:
+    - all 
+  roles:
+    - database
+
+- name: cluster config
+  hosts: pcs1
+  become: true
+  tags:
+    - all
+
+  roles:
+    - pcs_config
+
+- name: cluster prepare
+  hosts: pcs_servers
+  become: true
+  tags:
+    - all
+
+  roles:
+    - iscsi_initiator
+    - multipath
+    - gfs2
+
+- name: gfs2 config
+  hosts: pcs1
+  become: true
+  tags:
+    - all
+
+  roles:
+    - config_gfs2
+
+- name: install php-fpm to pcs1
+  hosts: pcs_servers
+  become: true
+  tags:
+    - all
+
+  roles:
+    - php-fpm
+
+- name: nginx_keepalived
+  hosts: nginx_server
+  become: true
+  tags:
+    - all 
+  roles:
+    - keepalived
+    - base_nginx_config1
+
+- name: cluster final
+  hosts: pcs1
+  become: true
+  tags:
+    - all
+  roles:
+    - cluster_final
+
+
+
+...

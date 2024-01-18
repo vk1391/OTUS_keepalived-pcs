@@ -1,0 +1,12 @@
+- name: enable clusterip pcs
+  command: "{{ item }}"
+  with_items: 
+   - 'pcs cluster cib tmp_cfg'
+   - 'pcs -f tmp_cfg resource create ClusterIP2 ocf:heartbeat:IPaddr2  nic=eth2 ip=192.168.56.254 cidr_netmask=32  op monitor interval=30s clone interleave=true ordered=true'
+   - 'pcs cluster cib-push tmp_cfg --config'
+  ignore_errors: true
+- name: enable nginx cluster
+  command: "{{ item}}"
+  with_items: 
+    - "pcs -f tmp_cfg resource create nginx ocf:heartbeat:nginx configfile=/etc/nginx/nginx.conf op monitor interval=30s timeout=20s clone interleave=true ordered=true"
+    - "pcs cluster cib-push tmp_cfg --config"

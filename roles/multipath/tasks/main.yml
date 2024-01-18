@@ -1,0 +1,58 @@
+---
+- meta: end_play
+  when: (ansible_distribution != "CentOS" and ansible_distribution_major_version != "7")
+
+- name: Install components for building
+  yum:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+    - iscsi-initiator-utils
+
+- name: enable multipath
+  command: sudo mpathconf --enable --with_multipathd y
+
+- name: add int multipath
+  become: true
+  command: "sudo multipath -a /dev/sdb"
+  ignore_errors: true
+- name: fact wwid
+  become: true
+  command: "sudo /lib/udev/scsi_id -gu /dev/sdb"
+  register: fact_wwid
+
+- name: Enable multipath service
+  systemd:
+    name: multipathd.service
+    enabled: true
+
+- name: copy multipath.conf
+  copy:
+    content: |
+      defaults {
+      user_friendly_names yes
+      find_multipaths yes
+      path_selector "round-robin 0"
+      path_grouping_policy failover
+      failback immediate
+      }
+      blacklist {
+      devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
+      devnode "^hd[a-z]"
+      }
+      multipaths {
+      multipath {
+      wwid {{ fact_wwid.stdout }}
+      alias OtusDSK
+      }
+      }
+    dest: "/etc/multipath.conf"
+    owner: root
+    group: root
+    mode: 0644
+- name: multipath devmap reload
+  become: true
+  command: "sudo multipath -r"
+  ignore_errors: true
+...

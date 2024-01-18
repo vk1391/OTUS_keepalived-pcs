@@ -1,0 +1,14 @@
+upstream backend {
+        server 192.168.56.254:80;
+}
+server {
+    listen       80;
+    server_name  192.168.57.254;
+
+    #access_log  /var/log/nginx/host.access.log  main;
+
+    location / {
+        index  index.html index.htm;
+        proxy_pass http://backend;
+}
+}
